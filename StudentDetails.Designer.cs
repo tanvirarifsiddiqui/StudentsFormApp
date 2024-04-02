@@ -1,36 +1,55 @@
 ﻿using System;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace StudentsFormApp
 {
-    partial class StudentDetails
+    partial class StudentDetails : Form
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
-        private System.ComponentModel.IContainer components = null;
-
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-        protected override void Dispose(bool disposing)
+        // Load event handler for the form
+        private void StudentDetails_Load()
         {
-            if (disposing && (components != null))
-            {
-                components.Dispose();
-            }
-            base.Dispose(disposing);
+            LoadStudentData(); // Load student data when the form is loaded
         }
 
-        // button action for adding new student information
+        // Load student data into the DataGridView
+        private void LoadStudentData()
+        {
+            using (var context = new StudentDBEntities())
+            {
+                // Query the database to retrieve student records along with the associated class names
+                var studentData = (from student in context.Student_Tables
+                                   join classTable in context.Class_Tables
+                                   on student.ClassId equals classTable.Id
+                                   select new
+                                   {
+                                       student.Name,
+                                       ClassName = classTable.Name, // Assuming the class name is stored in the Name column of the Class table
+                                       student.DOB,
+                                       Gender = student.Gender == 0 ? "Male" : "Female", // Convert gender int to string
+                                       Action = "Edit | Details | Delete" // Assuming these are buttons or links
+                                   }).ToList();
+
+                // Bind the retrieved data to the DataGridView
+                dataGridViewStudents.DataSource = studentData;
+            }
+        }
+
+        // Button click event handler for adding new student information
         private void btnAddStudent_Click(object sender, EventArgs e)
         {
-            // Creating an instance of the AddStudentForm form
-            AddStudentForm studentDetailsForm = new AddStudentForm();
-
-            // Show the StudentDetails form
-            studentDetailsForm.ShowDialog();
+            AddStudentForm addStudentForm = new AddStudentForm();
+            addStudentForm.ShowDialog();
         }
+
+        // Handle the click event of the refresh button
+        private void btnRefresh_Click(object sender, EventArgs e)
+        {
+            // Call the method to reload student data
+            LoadStudentData();
+        }
+
+
 
         #region Windows Form Designer generated code
 
@@ -70,16 +89,32 @@ namespace StudentsFormApp
             this.btnAddStudent.Text = "Add New Student Info";
             this.btnAddStudent.UseVisualStyleBackColor = true;
             this.btnAddStudent.Click += new System.EventHandler(this.btnAddStudent_Click); // Wire up the event handler here
+
+            // Initialize the refresh button
+            this.btnRefresh = new System.Windows.Forms.Button();
+            this.btnRefresh.Text = "Refresh";
+            this.btnRefresh.Location = new System.Drawing.Point(100, 60); // Adjust the location as needed
+            this.btnRefresh.Size = new System.Drawing.Size(100, 30); // Adjust the size as needed
+            this.btnRefresh.Click += new System.EventHandler(this.btnRefresh_Click);
+
+            // Add the refresh button to the form's controls
+            this.Controls.Add(this.btnRefresh);
             // 
             // dataGridViewStudents
             // 
             this.dataGridViewStudents.AllowUserToAddRows = false;
             this.dataGridViewStudents.AllowUserToDeleteRows = false;
-            this.dataGridViewStudents.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridViewStudents.Location = new System.Drawing.Point(50, 110);
-            this.dataGridViewStudents.Name = "dataGridViewStudents";
-            this.dataGridViewStudents.Size = new System.Drawing.Size(844, 399);
+            this.dataGridViewStudents.BackgroundColor = System.Drawing.Color.LightGray; // Set background color
+            this.dataGridViewStudents.BorderStyle = System.Windows.Forms.BorderStyle.None; // Remove border
+            this.dataGridViewStudents.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill; // Adjust column width to fill the available space
+            this.dataGridViewStudents.AutoSizeRowsMode = DataGridViewAutoSizeRowsMode.AllCells; // Adjust row height
+            this.dataGridViewStudents.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize; // Keep the auto size behavior if needed
+
+            // Set the new size and position of the DataGridView
+            this.dataGridViewStudents.Size = new System.Drawing.Size(800, 450);
+            this.dataGridViewStudents.Location = new System.Drawing.Point(100, 110); // Adjust the position as needed
             this.dataGridViewStudents.TabIndex = 2;
+
             // 
             // Form1
             // 
@@ -95,12 +130,17 @@ namespace StudentsFormApp
             this.ResumeLayout(false);
             this.PerformLayout();
 
+            //retriving data
+            this.StudentDetails_Load();
+
         }
 
         #endregion
 
         private System.Windows.Forms.Label labelTitle;
         private System.Windows.Forms.Button btnAddStudent;
+        private System.Windows.Forms.Button btnRefresh;
         private System.Windows.Forms.DataGridView dataGridViewStudents;
+
     }
 }
