@@ -3,74 +3,16 @@ using System.Windows.Forms;
 
 namespace StudentsFormApp
 {
-    partial class AddStudentForm : Form
+
+    public class Student
     {
-        // Other code...
-
-        private void buttonSave_Click(object sender, EventArgs e)
-        {
-            // Add code here to handle the Save button click event
-            // Validate the input fields
-            if (ValidateInput())
-            {
-                // Create a new Student object with the input data
-                Student newStudent = new Student
-                {
-                    Name = textBoxName.Text,
-                    Class = comboBoxClass.Text,
-                    DOB = dateTimePickerDOB.Value,
-                    Gender = radioButtonMale.Checked ? "Male" : "Female"
-                };
-
-                try
-                {
-                    // Insert the new student data into the database using Entity Framework
-                    using (var context = new YourDbContext()) // Replace YourDbContext with your actual DbContext class name
-                    {
-                        context.Students.Add(newStudent);
-                        context.SaveChanges();
-                    }
-
-                    // Show a success message to the user
-                    MessageBox.Show("Student information saved successfully!");
-
-                    // Close the current form and return to the main form
-                    this.Close();
-                }
-                catch (Exception ex)
-                {
-                    // Display an error message if insertion fails
-                    MessageBox.Show($"Error: {ex.Message}");
-                }
-            }
-        }
-
-        private bool ValidateInput()
-        {
-            // Perform validation for each input field
-            if (string.IsNullOrWhiteSpace(textBoxName.Text))
-            {
-                MessageBox.Show("Please enter a name.");
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(comboBoxClass.Text))
-            {
-                MessageBox.Show("Please select a class.");
-                return false;
-            }
-
-            // Add more validation as needed
-
-            // If all validation passes, return true
-            return true;
-        }
+        public int Id { get; set; }
+        public string Name { get; set; }
+        public string Class { get; set; }
+        public DateTime DOB { get; set; }
+        public string Gender { get; set; }
     }
-}
 
-
-namespace StudentsFormApp
-{
     partial class AddStudentForm : Form
     {
         /// <summary>
@@ -235,6 +177,97 @@ namespace StudentsFormApp
 
         }
 
+
+        //Handling The button Action
+        private void buttonSave_Click(object sender, EventArgs e)
+        {
+            // Validate input fields
+            if (string.IsNullOrWhiteSpace(textBoxName.Text))
+            {
+                MessageBox.Show("Please enter a valid name.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (comboBoxClass.SelectedItem == null)
+            {
+                MessageBox.Show("Please select a class.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+
+            //class data conversion
+            int ConvertToNumber(string numberText)
+            {
+                switch (numberText)
+                {
+                    case "One":
+                        return 1;
+                    case "Two":
+                        return 2;
+                    case "Three":
+                        return 3;
+                    case "Four":
+                        return 4;
+                    case "Five":
+                        return 5;
+                    case "Six":
+                        return 6;
+                    case "Seven":
+                        return 7;
+                    case "Eight":
+                        return 8;
+                    case "Nine":
+                        return 9;
+                    case "Ten":
+                        return 10;
+                    default:
+                        throw new ArgumentException("Invalid number text. Please provide a number from 'One' to 'Ten'.");
+                }
+            }
+
+            // Prepare data to insert into the Student table
+            string name = textBoxName.Text;
+            string selectedClass = comboBoxClass.SelectedItem.ToString();
+            int classId = ConvertToNumber(selectedClass);
+            DateTime dob = dateTimePickerDOB.Value;
+            int gender = radioButtonMale.Checked ? 0 : 1;
+
+            // Use Entity Framework to insert data into the Student table
+            using (var context = new StudentDBEntities()) //  YourDbContext with your actual DbContext class
+            {
+                try
+                {
+                    // Create a new Student Table object
+                    Student_Table newStudent = new Student_Table
+                    {
+                        Id = Guid.NewGuid(),
+                        Name = name,
+                        ClassId = classId, 
+                        DOB = dob,
+                        Gender = gender, 
+                        CreatedDate = DateTime.Now, 
+                        ModificationDate = DateTime.Now 
+                    };
+
+
+                    // Add the new student to the DbSet and save changes to the database
+                    context.Student_Tables.Add(newStudent);
+                    context.SaveChanges();
+
+                    // Show success message
+                    MessageBox.Show("Student added successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    // Close the AddStudentForm and return to the main form
+                    this.Close();
+                }
+                catch (Exception ex)
+                {
+                    // Display error message if insertion fails
+                    MessageBox.Show("Error adding student: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
         #endregion
 
         private System.Windows.Forms.Label labelName;
@@ -248,4 +281,5 @@ namespace StudentsFormApp
         private System.Windows.Forms.RadioButton radioButtonFemale;
         private System.Windows.Forms.Button buttonSave;
     }
+
 }
